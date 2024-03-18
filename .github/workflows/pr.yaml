@@ -1,0 +1,50 @@
+name: Build Images
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - 'master'
+
+env:
+  ORG: fsa-streamotion
+  DOCKER_REGISTRY: 686476220461.dkr.ecr.ap-southeast-2.amazonaws.com
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: gitops-prod-base
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Environment Variables
+      id: env-var
+      uses: fsa-streamotion/private-github-actions/actions/pr-preview-env/preview-env-var@master
+
+    - name: Lint Dockerfiles
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        failure-threshold: error
+        dockerfile: Dockerfile
+        verbose: true
+
+    - name: Build and Push Docker images
+      id: build-push-image
+      uses: fsa-streamotion/private-github-actions/actions/skaffold-build-multiarch@master
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+  check-pr:
+    name: Check PR
+    runs-on: gitops-prod-base
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: pr-description-checker
+      uses: fsa-streamotion/private-github-actions/actions/pr-empty-description-lint@master
