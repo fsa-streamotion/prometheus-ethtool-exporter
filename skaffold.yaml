@@ -1,0 +1,14 @@
+apiVersion: skaffold/v2beta29
+kind: Config
+build:
+  artifacts:
+  - image: ethtool-exporter
+    context: .
+    docker:
+      network: host
+  tagPolicy:
+    envTemplate:
+      template: '{{.VERSION}}'
+  local: {}
+deploy:
+  kubectl: {}

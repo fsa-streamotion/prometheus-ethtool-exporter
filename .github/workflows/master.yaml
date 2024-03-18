@@ -1,0 +1,41 @@
+name: Merge from PR
+
+on:
+  pull_request:
+    types: [closed]
+
+env:
+  ORG: fsa-streamotion
+  DOCKER_REGISTRY: 686476220461.dkr.ecr.ap-southeast-2.amazonaws.com
+
+jobs:
+  close_job:
+    if: github.event.pull_request.merged == false
+    runs-on: gitops-prod-base
+    steps:
+    - run: |
+        echo PR #${{ github.event.number }} has been closed without being merged
+
+  merge_pr:
+    if: github.event.pull_request.merged == true
+    name: Master Build
+    runs-on: gitops-prod-base
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Environment Variables
+      id: env-var
+      run: |
+        GIT_REPO=${{ github.event.repository.name }}
+        echo "GIT_REPO=$GIT_REPO" >> $GITHUB_ENV
+
+    - name: Generate and Tag Version
+      id: generate_tag_version
+      uses: fsa-streamotion/private-github-actions/actions/pr-master/pr-master-versioning@master
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and Push Docker images
+      id: build-push-image
+      uses: fsa-streamotion/private-github-actions/actions/skaffold-build-multiarch@master
