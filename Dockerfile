@@ -1,13 +1,19 @@
-FROM python:alpine
+FROM python:3
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY . /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY . .
+
+RUN apt update \
+    && apt install -y --no-install-recommends ethtool \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 9417
 
 USER 1000
 
-CMD ["python3", "/ethtool-exporter.py", "-l", "0.0.0.0:9417"]
+CMD [ "python", "./ethtool-exporter.py", "-L", "0.0.0.0", "-p", "9417" ]
